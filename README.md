@@ -1,42 +1,84 @@
 # KnowVault AI
-**Your Knowledge. Your Vault. Your AI.**
 
-KnowVault AI is a privacy-first personal knowledge assistant. It allows users to upload documents (TXT, DOCX) or paste text, and then ask questions. The system strictly isolates data per user, preventing cross-user data leakage.
+A privacy-first Retrieval-Augmented Generation system that allows users to upload DOCX/TXT/PDF files or paste text and ask questions over their private knowledge.
 
-## Architecture & Pipeline
-- **Frontend**: Next.js (App Router), Tailwind CSS, TypeScript
-- **Backend**: FastAPI, Python
-- **RAG Pipeline**:
-  - Upload -> Text Extraction -> Normalization -> Chunking
-  - Embeddings generation via `SentenceTransformers` (`all-MiniLM-L6-v2`)
-  - Storage in `ChromaDB` (Persistent)
-  - Semantic retrieval with user filtering
-  - Confidence guard to prevent hallucination
-  - LLM generation (Gemini) with Source Proof
+## Links
+- **GitHub Repository**: [https://github.com/Vrishti-vibes/KnowVault-AI](https://github.com/Vrishti-vibes/KnowVault-AI)
+- **Live Demo**: *Requires manual deployment via Vercel and Railway dashboards*
 
-## Privacy Model
-This project implements application-level tenant isolation. Every chunk stored in the vector DB is tagged with a `user_id`. Queries strictly enforce `where={"user_id": user_id}`. (Note: Demo authentication is used for the prototype).
+## Features
+- Upload knowledge documents (TXT, DOCX, PDF) or raw text.
+- Unified ingestion pipeline (clean, chunk, embed).
+- AI Q&A using Gemini over local vector database.
+- Deep user isolation: User A cannot query User B's documents.
+- Confidence guard: Refuses to hallucinate answers if knowledge isn't found.
+- Document Versioning: Re-uploading increments document version safely.
+- Selectable Document Mode: Chat with specific subset of documents.
+- Evidence Proof: Displays exact source snippets and document metadata used to generate the answer.
+- Chat History: View past questions and delete previous histories locally.
 
-## Installation & Setup
-1. Clone the repository and navigate to `knowvault-ai`.
-2. **Backend**:
-   - `cd backend`
-   - `python -m venv venv`
-   - `.\venv\Scripts\Activate.ps1`
-   - `pip install -r requirements.txt`
-   - Configure `.env` with `LLM_API_KEY`
-   - Start: `uvicorn app.main:app --reload --port 8000`
-3. **Frontend**:
-   - `cd frontend`
-   - `npm install`
-   - Start: `npm run dev`
+## Architecture
 
-## Sample Demo
-- Open `http://localhost:3000`
-- Select **User A** -> Upload `sample_data/company_report.txt`
-- Select **User B** -> Upload `sample_data/ai_research_report.docx`
-- Ask questions. You'll observe User A cannot access User B's knowledge.
+```text
+User
+ ↓
+Next.js
+ ↓
+FastAPI
+ ↓
+Document ingestion
+ ↓
+Chunking
+ ↓
+Sentence Transformers
+ ↓
+ChromaDB
+ ↓
+Semantic Retrieval
+ ↓
+Confidence Guard
+ ↓
+Gemini
+ ↓
+Answer + Source Proof
+```
 
-## Limitations
-- OCR / PDF not supported out of the box.
-- Authentication is a dropdown for demo purposes.
+## Tech Stack
+- **Frontend**: Next.js (App Router), Tailwind CSS, React, Lucide Icons
+- **Backend**: FastAPI, Python, Pytest
+- **AI/ML**: `google-genai` (Gemini), `sentence-transformers`
+- **Database**: ChromaDB (Vector Store)
+
+## Local Setup
+
+### Backend
+1. `cd backend`
+2. `python -m venv venv`
+3. `.\venv\Scripts\Activate.ps1`
+4. `pip install -r requirements.txt`
+5. Create `.env` based on `.env.example` with `LLM_PROVIDER=gemini` and `LLM_API_KEY=<your_key>`.
+6. Run server: `uvicorn app.main:app --port 8000`
+
+### Frontend
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev`
+
+## Deployment Architecture
+**Backend** is designed to run on a platform like Railway or Render.
+**Frontend** is designed to run on Vercel or Netlify.
+
+### Environment Variables
+**Backend:**
+- `LLM_PROVIDER=gemini`
+- `LLM_API_KEY=<your_key>`
+- `LLM_MODEL=gemini-1.5-flash`
+- `CHROMA_PATH=./chroma_db` (For production, ensure a persistent volume is mounted here)
+- `CORS_ORIGINS=<deployed_frontend_url>`
+
+**Frontend:**
+- `NEXT_PUBLIC_API_URL=<deployed_backend_url>`
+
+## Known Limitations
+1. **User Authentication:** Demo user switching (User A / User B) is for demonstration only and is not real authentication. A proper production system would require JWTs and an Auth provider (e.g. NextAuth/Clerk).
+2. **ChromaDB Persistence:** ChromaDB stores data locally on disk by default. When deployed to a PaaS like Railway, you *must* attach a persistent volume to the `CHROMA_PATH` directory, otherwise vector data will be lost on container restart.
