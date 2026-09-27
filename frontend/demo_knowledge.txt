@@ -1,0 +1,3 @@
+KnowVault AI was developed as a privacy-first RAG project.
+The project uses ChromaDB as its vector database.
+The project uses Sentence Transformers for embeddings.
